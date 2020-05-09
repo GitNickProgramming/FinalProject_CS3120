@@ -3,8 +3,8 @@
 ##### <center> Nick Gagliardi </center>
 
 ---
-### To run the program:
-```python
+**To run the program:**
+```
 cd src
 python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --cities_fn '../data/cities.csv'
 ```
@@ -31,40 +31,394 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
     - Santa Fe, NM
     - Chicago, IL
     - New York, NY
-
+    
+    I want to see if mapquest, google maps, and etc. can give me a better result to this TSP or if a GA will give better results.
 ---
 #### II. Implementation
 1. **`./src/main.py`**
-    - Coming Soon
+    - The main purpose of main.py is to parse the input entered by the user (See the beginning of ths file on how ***to run the program***)
+    - **`def run(args)`:**
+        - `genes` 
+            - passes args.cities_fn to the utils class
+        - `history` 
+            - saves the individual's from the population
+    ```python
+    import utils
+    import random
+    import argparse
+    import tsp_ga as ga
+    from datetime import datetime
+
+
+    def run(args):
+        genes = utils.get_genes_from(args.cities_fn)
+
+        if args.verbose:
+            print("-- Running Model with {} cities --".format(len(genes)))
+
+        history = ga.run_ga(genes, args.pop_size, args.n_gen,
+                            args.tourn_size, args.mut_rate, args.verbose)
+
+        if args.verbose:
+            print("-- Drawing Route --")
+
+        utils.plot(history['cost'], history['route'])
+
+        if args.verbose:
+            print("-- Done --")
+    ```
+    
+    
+    - **`__name__ == "__main__"`**:
+        - `parser`
+            - parses the arguments entered by the user when trying to run the program.
+    
+    ```python
+
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument('-v', '--verbose', type=int, default=1)
+        parser.add_argument('--pop_size', type=int, default=500, help='Population size')
+        parser.add_argument('--tourn_size', type=int, default=50, help='Tournament size')
+        parser.add_argument('--mut_rate', type=float, default=0.02, help='Mutation rate')
+        parser.add_argument('--n_gen', type=int, default=20, help='Number of equal generations before stopping')
+        parser.add_argument('--cities_fn', type=str, default="data/cities.csv",
+                            help='Data containing the geographical coordinates of cities')
+
+        random.seed(datetime.now())
+        args = parser.parse_args()
+
+        if args.tourn_size > args.pop_size:
+            raise argparse.ArgumentTypeError('Tournament size cannot be bigger than population size.')
+
+        run(args)
+    ```
+    
+    
 2. **`./src/tsp_ga.py`**
     - Selection Technique - Tournament Selection
         - Initialized the population with the tournament size = 50
         - Save every individual for the tournament to find the fittest
-        - Find the fittest individual according to the the distance between the cities in kilometers (because miles make no sense anywhere else in the world). 
+        - Find the fittest individual according to the the distance between the cities in kilometers (because miles make no sense anywhere else in the world).
+    ```python
+    from sys import maxsize
+    from time import time
+    from random import random, randint, sample
+    from haversine import haversine
+
+
+    class Gene:  # City
+        # keep distances from cities saved in a table to improve execution time.
+        __distances_table = {}
+
+        def __init__(self, name, lat, lng):
+            self.name = name
+            self.lat = lat
+            self.lng = lng
+
+        def get_distance_to(self, dest):
+            origin = (self.lat, self.lng)
+            dest = (dest.lat, dest.lng)
+
+            forward_key = origin + dest
+            backward_key = dest + origin
+
+            if forward_key in Gene.__distances_table:
+                return Gene.__distances_table[forward_key]
+
+            if backward_key in Gene.__distances_table:
+                return Gene.__distances_table[backward_key]
+
+            dist = int(haversine(origin, dest))
+            Gene.__distances_table[forward_key] = dist
+
+            return dist
+    ```
+    
+    ```python
+    class Individual:  # Route: possible solution to TSP
+        def __init__(self, genes):
+            assert(len(genes) > 3)
+            self.genes = genes
+            self.__reset_params()
+
+        def swap(self, gene_1, gene_2):
+            self.genes[0]
+            a, b = self.genes.index(gene_1), self.genes.index(gene_2)
+            self.genes[b], self.genes[a] = self.genes[a], self.genes[b]
+            self.__reset_params()
+
+        def add(self, gene):
+            self.genes.append(gene)
+            self.__reset_params()
+
+        @property
+        def fitness(self):
+            if self.__fitness == 0:
+                self.__fitness = 1 / self.travel_cost  # Normalize travel cost
+            return self.__fitness
+
+        @property
+        def travel_cost(self):  # Get total travelling cost
+            if self.__travel_cost == 0:
+                for i in range(len(self.genes)):
+                    origin = self.genes[i]
+                    if i == len(self.genes) - 1:
+                        dest = self.genes[0]
+                    else:
+                        dest = self.genes[i+1]
+
+                    self.__travel_cost += origin.get_distance_to(dest)
+
+            return self.__travel_cost
+
+        def __reset_params(self):
+            self.__travel_cost = 0
+            self.__fitness = 0
+    ```
+    
+    ```python
+    class Population:  # Population of individuals
+        def __init__(self, individuals):
+            self.individuals = individuals
+
+        @staticmethod
+        def gen_individuals(sz, genes):
+            individuals = []
+            for _ in range(sz):
+                individuals.append(Individual(sample(genes, len(genes))))
+            return Population(individuals)
+
+        def add(self, route):
+            self.individuals.append(route)
+
+        def rmv(self, route):
+            self.individuals.remove(route)
+
+        def get_fittest(self):
+            fittest = self.individuals[0]
+            for route in self.individuals:
+                if route.fitness > fittest.fitness:
+                    fittest = route
+
+            return fittest
+    ```
+
+    ```python
+    def evolve(pop, tourn_size, mut_rate):
+        new_generation = Population([])
+        pop_size = len(pop.individuals)
+        elitism_num = pop_size // 2
+
+        # Elitism
+        for _ in range(elitism_num):
+            fittest = pop.get_fittest()
+            new_generation.add(fittest)
+            pop.rmv(fittest)
+
+        # Crossover
+        for _ in range(elitism_num, pop_size):
+            parent_1 = selection(new_generation, tourn_size)
+            parent_2 = selection(new_generation, tourn_size)
+            child = crossover(parent_1, parent_2)
+            new_generation.add(child)
+
+        # Mutation
+        for i in range(elitism_num, pop_size):
+            mutate(new_generation.individuals[i], mut_rate)
+
+        return new_generation
+    ```
+
+
+    ```python
+    def crossover(parent_1, parent_2):
+        def fill_with_parent1_genes(child, parent, genes_n):
+            start_at = randint(0, len(parent.genes)-genes_n-1)
+            finish_at = start_at + genes_n
+            for i in range(start_at, finish_at):
+                child.genes[i] = parent_1.genes[i]
+
+        def fill_with_parent2_genes(child, parent):
+            j = 0
+            for i in range(0, len(parent.genes)):
+                if child.genes[i] == None:
+                    while parent.genes[j] in child.genes:
+                        j += 1
+                    child.genes[i] = parent.genes[j]
+                    j += 1
+
+        genes_n = len(parent_1.genes)
+        child = Individual([None for _ in range(genes_n)])
+        fill_with_parent1_genes(child, parent_1, genes_n // 2)
+        fill_with_parent2_genes(child, parent_2)
+
+        return child
+    ```
+
+
+    ```python
+    def mutate(individual, rate):
+        for _ in range(len(individual.genes)):
+            if random() < rate:
+                sel_genes = sample(individual.genes, 2)
+                individual.swap(sel_genes[0], sel_genes[1])
+    ```
+
+
+    ```python
+    def selection(population, competitors_n):
+        return Population(sample(population.individuals, competitors_n)).get_fittest()
+    ```
+    
+    ```python
+    def run_ga(genes, pop_size, n_gen, tourn_size, mut_rate, verbose=1):
+        population = Population.gen_individuals(pop_size, genes)
+        history = {'cost': [population.get_fittest().travel_cost]}
+        counter, generations, min_cost = 0, 0, maxsize
+
+        if verbose:
+            print("-- Genetic Algorithm -- Initiating evolution...")
+
+        start_time = time()
+        while counter < n_gen:
+            population = evolve(population, tourn_size, mut_rate)
+            cost = population.get_fittest().travel_cost
+
+            if cost < min_cost:
+                counter, min_cost = 0, cost
+            else:
+                counter += 1
+
+            generations += 1
+            history['cost'].append(cost)
+
+        total_time = round(time() - start_time, 6)
+
+        if verbose:
+            print("-- Genetic Algorithm -- Evolution finished after {} generations in {} s".format(generations, total_time))
+            print("-- Genetic Algorithm -- Minimum travelling cost {} KM".format(min_cost))
+
+        history['generations'] = generations
+        history['total_time'] = total_time
+        history['route'] = population.get_fittest()
+
+        return history
+    ```
+    
+    
 3. **`./src/utils.py`**
-    - Coming Soon
+    ```python
+    import matplotlib.pyplot as plt
+    import tsp_ga as ga
+    import pandas as pd
+    from random import sample
+    from mpl_toolkits.basemap import Basemap
+
+
+    def get_genes_from(fn, sample_n=0):
+        df = pd.read_csv(fn)
+        genes = [ga.Gene(row['city'], row['latitude'], row['longitude'])
+                 for _, row in df.iterrows()]
+
+        return genes if sample_n <= 0 else sample(genes, sample_n)
+    ```
+
+    ```python
+    def plot(costs, individual, save_to=None):
+        plt.figure(1)
+        plt.subplot(121)
+        plot_ga_convergence(costs)
+
+        plt.subplot(122)
+        plot_route(individual)
+
+        if save_to is not None:
+            plt.savefig(save_to)
+            plt.close()
+        else:
+            plt.show()
+    ```
+    
+    ```python
+    def plot_ga_convergence(costs):
+        x = range(len(costs))
+        plt.title("GA Convergence")
+        plt.xlabel('generation')
+        plt.ylabel('cost (KM)')
+        plt.text(x[len(x) // 2], costs[0], 'min cost: {} KM'.format(costs[-1]), ha='center', va='center')
+        plt.plot(x, costs, '-')
+    ```
+
+    ```python
+    def plot_route(individual):
+        m = Basemap(projection='lcc', resolution=None,
+                    width=5E6, height=5E6,
+                    lat_0=-15, lon_0=-56)
+
+        plt.axis('off')
+        plt.title("Shortest Route")
+
+        for i in range(0, len(individual.genes)):
+            x, y = m(individual.genes[i].lng, individual.genes[i].lat)
+
+            plt.plot(x, y, 'ok', c='r', markersize=5)
+            if i == len(individual.genes) - 1:
+                x2, y2 = m(individual.genes[0].lng, individual.genes[0].lat)
+            else:
+                x2, y2 = m(individual.genes[i+1].lng, individual.genes[i+1].lat)
+
+            plt.plot([x, x2], [y, y2], 'k-', c='r')
+            m = Basemap(projection='mill')
+            m.drawcoastlines()    
+    ```
+    
 4. **`./data/cities.csv`**
-    - Coming Soon
+    - csv file that holds the name/latitude/longitude for each city
+    - 15 cities
+    ```
+    city,latitude,longitude
+    Denver,39.7420,-104.9915
+    Colorado Springs,38.8461,-104.8006
+    Telluride,37.9375,-107.8123
+    Las Vegas,36.1146,-115.1728
+    Grand Canyon,36.0565,-112.1251
+    Yellowstone National Park,44.4237,-110.5885
+    Mount Rushmore,43.9686,-103.3818
+    Seattle,47.6080,-122.3352
+    Redwood National Park,41.2131,-124.0046
+    San Diego,32.7157,-117.1610
+    Los Angeles,34.05223,-118.24368
+    Mount Hood National Forest,45.454350,-121.933136
+    Santa Fe,35.691544,-105.944183
+    Chicago,41.881832,-87.623177
+    New York City,40.730610,-73.935242
+    ```
 ---
 #### III. Libraries/Packages
    ##### REQUIRED TO RUN THE PROGRAM: 
    1. ***basemap***
-       - coming soon
+       - Installing this package and be a pain in the butt depending on your system.
+       - If you run into any issues (like I did), follow this link's tutorial.
+           - https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-installing-matplotlib-and-basemap/
+       - Side note:
+           - I believe some of issues I had installing this package was due to the fact that it doesnt always play nice with virtual environments.
    2. ***haversine***
-       - coming soon
+       - `pip3 install haversine`
    3. ***matplotlib***
-       - coming soon
+       -  `pip3 install matplotlib`
    4. ***pandas***
-       - coming soon
+       - `pip3 install pandas`
    5. ***utils***
-       - coming soon
+       - `pip3 install utils`
    6. ***random***
-       - coming soon
+       - `pip3 install random`
    7. ***argparse***
-       - coming soon
+       - `pip3 install argparse`
    8. ***from sys import maxsize***
    9. ***from time import time***
-   10. ***from time import time***
+ 
 ---
 #### IV. Genetic Algorithm (GA)
 A genetic algorithm is a heuristic search method used in artificial intelligent and computing. It is used for finding optimized solutions to search problems based on the theory of natural selection and evolutionary biology. Genetic algorithms are excellent for searching through large and complex data sets. They are considered capable of finding reasonable solutions to complex issues as they are highly capable of solving unconstrained and constrained optimization issues (Techopedia).
@@ -125,3 +479,5 @@ Limitations (Medium)
         - Used to describe the limitations of GA
    7. **Genetic Algorithms-Overview, Limitations and Solutions**
         - https://www.krishisanskriti.org/vol_image/04Jul201511073305%20%20%20%20%20%20%20Dayanand%205%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20329-333.pdf
+   8. **Matplotlib Basemap Tutorial: Installing matplotlib and Basemap**
+        - https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-installing-matplotlib-and-basemap/
