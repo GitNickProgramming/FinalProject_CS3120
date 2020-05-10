@@ -13,11 +13,11 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
 #### I. Description of the Problem
 1. *What is the project about?*
 
-    This project started as an idea to play around with reinforcement learning as well as the Travelling Salesman Problem (TSP). Slowly it turned into finding the most efficient route for my fiance and I to take on a road trip. While a majorirty of the code is based on Mr. lccasagrande's implementation, documentation and adjustments were made to answer my overall objective. This program did show that the shortest route was roughly 10,000km, where mapquest resulted in about 15,000km. I am tempted to try and find an average of both over many interations, but was unable to find the time to do so before this projects deadline. 
+    This project started as an idea to play around with reinforcement learning as well as the Travelling Salesman Problem (TSP). Slowly it turned into finding the most efficient route for my fiancé and I to take on a road trip. While much of the code is based on Mr. lccasagrande's implementation, documentation and adjustments were made to answer my overall objective. This program did show that the shortest route was roughly 10,000km, where MapQuest resulted in about 15,000km. I am tempted to try and find an average of both over many iterations but was unable to find the time to do so before this projects deadline. 
     
-    A breif description of the Travelling Salesman Problem from Wikipedia, "Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city and returns to the origin city?" It is an NP-hard problem in combinatorial optimization, important in operations research and theoretical computer science.
+    A brief description of the Travelling Salesman Problem from Wikipedia, "Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city and returns to the origin city?" It is an NP-hard problem in combinatorial optimization, important in operations research and theoretical computer science.
     
-    Utilizing a Genetic Algorithm the program will attempted to find the shortest route between 15 American locations:
+    Utilizing a Genetic Algorithm, the program will attempting to find the shortest route between 15 American locations:
     - Denver, CO
     - Colorado Springs, CO
     - Telluride, CO
@@ -35,7 +35,7 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
     - New York, NY
     
     
-    The output is two graphs, one showing a comparison of the cost (distance in KM) and number of generations. The other graph is a rough estimation of the shortest route, with the coastline of the globel in the foreground. 
+    The output is two graphs, one showing a comparison of the cost (distance in KM) and number of generations. The other graph is a rough estimation of the shortest route, with the coastline of the global in the foreground. 
     
     ![](output/main_output.png)
     ![](output/shortest_route.png)
@@ -43,12 +43,12 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
 ---
 #### II. Implementation
 1. **`./src/main.py`**
-    - The main purpose of main.py is to parse the input entered by the user (See the beginning of ths file on how ***to run the program***)
+    - The main purpose of main.py is to parse the input entered by the user (See the beginning of this file on how ***to run the program***)
     - **`def run(args)`:**
         - `genes` 
             - passes args.cities_fn to the utils class
         - `history` 
-            - saves the individual's from the population
+            - saves the individuals from the population
     ```python
     import utils
     import random
@@ -104,10 +104,10 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
     
     
 2. **`./src/tsp_ga.py`**
-    - Selection Technique - Tournament Selection
-        - Initialized the population with the tournament size = 50
-        - Save every individual for the tournament to find the fittest
-        - Find the fittest individual according to the the distance between the cities in kilometers (because miles make no sense anywhere else in the world).
+    - **Class Gene**
+        - keeps the distances from the cities saved in a table
+        - Gene is equal to the City information
+    
     ```python
     from sys import maxsize
     from time import time
@@ -142,7 +142,11 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
 
             return dist
     ```
-    
+    - **Individual**
+        - Are all the possible solutions to the Travelling Salesman Problem
+        - Checks Fitness
+        - Checks Total travelling cost (distance)
+        
     ```python
     class Individual:  # Route: possible solution to TSP
         def __init__(self, genes):
@@ -182,7 +186,9 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
             self.__travel_cost = 0
             self.__fitness = 0
     ```
-    
+    - **Population**
+        - Population of all the individual routes.
+        - Gets individual's fitness status
     ```python
     class Population:  # Population of individuals
         def __init__(self, individuals):
@@ -217,7 +223,7 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
         - It is more likely that the new offspring (children) will  contain  good  parts  of  their parents, and consequently perform better as compared to their ancestors. 
         - A number of different crossover  operators  can  be  used  in  GAs(Kaya  &  Uyar,  2011), beginning  with  one-point  crossover  and  two-point  crossover,  then evolving  into  several  techniques  to  accommodate  some  situations.
     - **Mutation:**
-        - This is where there is a cahnge or a switch between specific genes within a single chromosome to create chromosomes that provide a new solution for the next generation, with the aim of obtaining the best possible solutions, and thus introduce a certain level of diversity to the population.
+        - This is where there is a change or a switch between specific genes within a single chromosome to create chromosomes that provide a new solution for the next generation, with the aim of obtaining the best possible solutions, and thus introduce a certain level of diversity to the population.
     ```python
     def evolve(pop, tourn_size, mut_rate):
         new_generation = Population([])
@@ -278,12 +284,18 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
                 sel_genes = sample(individual.genes, 2)
                 individual.swap(sel_genes[0], sel_genes[1])
     ```
-
+    - **Selection Technique**
+        - Initialized the population with the tournament size = 50
+        - Save every individual for the tournament to find the fittest
+        - Find the fittest individual according to the distance between the cities in kilometers (because miles make no sense anywhere else in the world).
 
     ```python
     def selection(population, competitors_n):
         return Population(sample(population.individuals, competitors_n)).get_fittest()
     ```
+    - **run_ga**
+        - The `run_ga` method handles running the Genetic Algorithm
+    
     
     ```python
     def run_ga(genes, pop_size, n_gen, tourn_size, mut_rate, verbose=1):
@@ -340,7 +352,7 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
 
         return genes if sample_n <= 0 else sample(genes, sample_n)
     ```
-
+    - Plots the cost and individual route
     ```python
     def plot(costs, individual, save_to=None):
         plt.figure(1)
@@ -419,7 +431,7 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
        - If you run into any issues (like I did), follow this link's tutorial.
            - https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-installing-matplotlib-and-basemap/
        - Side note:
-           - I believe some of issues I had installing this package was due to the fact that it doesnt always play nice with virtual environments.
+           - I believe some of issues I had installing this package was since it doesn't always play nice with virtual environments.
    2. ***haversine***
        - `pip3 install haversine`
    3. ***matplotlib***
@@ -435,31 +447,31 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
  
 ---
 #### IV. Genetic Algorithm (GA)
-The main reason for selecting this particular algorithm was the fact that it was not really covered in our Machine Learning class. I was already curious about GAs, having already seen videos of race car games being played by AI based on GAs. So while this particular implementation is rather simple, I thought it was a good way to start. Furthermore, I tried to maintain the idea that this project was for expanding my base knowledge and to try something new.
+The main reason for selecting this algorithm was the fact that it was not really covered in our Machine Learning class. I was already curious about GAs, having already seen videos of race car games being played by AI based on GAs. So, while this particular implementation is rather simple, I thought it was a good way to start. Furthermore, I tried to maintain the idea that this project was for expanding my base knowledge and to try something new.
 
 Now a genetic algorithm is a heuristic search method used in artificial intelligent and computing. It is used for finding optimized solutions to search problems based on the theory of natural selection and evolutionary biology. Genetic algorithms are excellent for searching through large and complex data sets. They are considered capable of finding reasonable solutions to complex issues as they are highly capable of solving unconstrained and constrained optimization issues (Techopedia).
 
-In a genetic algorithm, a population of candidate solutions (also called individuals, creatues, or phenotypes) to an optimization problem evolved toward better solutions (wikipedia). Each of these 'individual' solutions has a set of properties that can be manipulated or adjusted. Then by Evolving from a population of randomly generated individuals, in an iterative process, with the population in each iteration called a *generation*. After each generation is generated the fitness of every individual in the population is evaluated through a fitness function. In my case, the project implementes a type of *tournament* style based on the distance in KM. The individuals that are the most successful are selected from the current population, and each individual's attributes are then modified, or altered randomly, to form the next generation. Usually, GAs will terminate when either a max number of generations is reached, or a predetermined fitness level is achieved for the population.
+In a genetic algorithm, a population of candidate solutions (also called individuals, creatures, or phenotypes) to an optimization problem evolved toward better solutions (wikipedia). Each of these 'individual' solutions has a set of properties that can be manipulated or adjusted. Then by Evolving from a population of randomly generated individuals, in an iterative process, with the population in each iteration called a *generation*. After each generation is generated the fitness of every individual in the population is evaluated through a fitness function. In my case, the project implemented a type of *tournament* style based on the distance in KM. The individuals that are the most successful are selected from the current population, and each individual's attributes are then modified, or altered randomly, to form the next generation. Usually, GAs will terminate when either a max number of generations is reached, or a predetermined fitness level is achieved for the population.
 
-The aim of this program is to find a more efficient solution than just brute force searching for an answer. While this particular algorithm is simple, understanding the behavior is difficult to understand. I know that I struggled with the way GAs generate a solutions. 
+The aim of this program is to find a more efficient solution than just brute force searching for an answer. While this algorithm is simple, understanding the behavior is difficult to understand. I know that I struggled with the way GAs generate a solution. 
 
 ![](output/flowchart_GA.png)
 
-However, genetic algorithms really only require a few basic steps:
+However, genetic algorithms only require a few basic steps:
    1. ***Initialization:***
        - Depending on the problem trying to be solved, the population size can vary. Often, the original population will be generated randomly, thus allowing for a wider range of possible mutations.
    2. ***Selection:***
        - After each generations a portion of the existing population is selected to start the next generation.
    3. ***Genetic Operators:***
        - These processes ultimately result in the next generation population of 'chromosomes' that is different from the initial generation.
-       - The average fitness will have increase through this process for the overall population, since only the best individuals from the first generation are selected along with a small porportion of less fit solutions.
+       - The average fitness will have increase through this process for the overall population, since only the best individuals from the first generation are selected along with a small proportion of less fit solutions.
        - These less fit solutions ensure genetic diversity within the genetic pool of the parents and therefore ensure the genetic diversity of the subsequent generation of children.
    4. ***Termination:***
        - There are various ways to terminate once a condition has been reached. Wikipedia lists the most common:
            1. A solution is found that satisfies minimum criteria.
            2. Fixed number of generations reached
            3. Allocated budget (computation time/money) reached
-           4. The highest ranking solution's fitness is reaching or has reached a plateau such that successive iterations are no longer producing better results.
+           4. The highest-ranking solution's fitness is reaching or has reached a plateau such that successive iterations are no longer producing better results.
            5. Manual inspection
            6. Combinations of the above
 
@@ -472,15 +484,15 @@ Limitations (Medium)
 
 ---
 #### V. Analysis of Performance
-The model cold be improved by adding specifing start location, rather than being just random. However the overall performance was improved by keeping distances from different cities in a table, thus improving the execution time (see `class Gene` in `./src/tsp_ga.py`). 
+The model cold be improved by adding specifying start location, rather than being just random. However the overall performance was improved by keeping distances from different cities in a table, thus improving the execution time (see `class Gene` in `./src/tsp_ga.py`). 
 
-Also implemented to improve performance is **Elitism Selection**, which is when the best individuals are selected from the current generation and then slightly altered (evolution, crossover, mutation, etc), then added to the next generation. Overtime this will gradually improve the results i.e. performance. See `def evolve()` in `./src/tsp_ga.py`. 
+Also implemented to improve performance is **Elitism Selection**, which is when the best individuals are selected from the current generation and then slightly altered (evolution, crossover, mutation, etc.), then added to the next generation. Overtime this will gradually improve the results i.e. performance. See `def evolve()` in `./src/tsp_ga.py`. 
 
 ![](output/performance_diagram.png)
 
 ---
 #### VI. Final Notes
-1. While the most of the code is not my own, I used this project to study something I found interesting. I did change the cities as well as some of the verbage (was in spanish originally)
+While most of the code is not my own, I used this project to study something I found interesting. I did change the cities as well as some of the verbiage (was in spanish originally), not to mention all the documentation was done by myself. Overall, I spent around 40 hours researching this project, documenting, and testing different implementations. 
 
 ---
 #### VII. References
@@ -492,7 +504,7 @@ Also implemented to improve performance is **Elitism Selection**, which is when 
    3. **City Locations**
         - https://www.latlong.net/place/
         - Used for all the latitude and Longitude values for each city.
-   4. **Multi-stop Route Planner and Optimization Tools - Mapquest**
+   4. **Multi-stop Route Planner and Optimization Tools - MapQuest**
         - https://www.mapquest.com/routeplanner
         - Base Route = 15638 km
    5. **Techopedia**
