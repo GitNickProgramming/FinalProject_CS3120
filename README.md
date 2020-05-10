@@ -443,6 +443,8 @@ In a genetic algorithm, a population of candidate solutions (also called individ
 
 The aim of this program is to find a more efficient solution than just brute force searching for an answer. While this particular algorithm is simple, understanding the behavior is difficult to understand. I know that I struggled with the way GAs generate a solutions. 
 
+![](output/flowchart_GA.png)
+
 However, genetic algorithms really only require a few basic steps:
    1. ***Initialization:***
        - Depending on the problem trying to be solved, the population size can vary. Often, the original population will be generated randomly, thus allowing for a wider range of possible mutations.
@@ -474,7 +476,7 @@ The model cold be improved by adding specifing start location, rather than being
 
 Also implemented to improve performance is **Elitism Selection**, which is when the best individuals are selected from the current generation and then slightly altered (evolution, crossover, mutation, etc), then added to the next generation. Overtime this will gradually improve the results i.e. performance. See `def evolve()` in `./src/tsp_ga.py`. 
 
-![](output/performance_output.png)
+![](output/performance_diagram.png)
 
 ---
 #### VI. Final Notes
