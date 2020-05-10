@@ -481,7 +481,7 @@ Also implemented to improve performance is **Elitism Selection**, which is when 
 ---
 #### VI. Final Notes
 1. While the most of the code is not my own, I used this project to study something I found interesting. I did change the cities as well as some of the verbage (was in spanish originally)
-2. 
+
 ---
 #### VII. References
    1. **lccasagrande**
