@@ -13,7 +13,7 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
 #### I. Description of the Problem
 1. *What is the project about?*
 
-    This project started as an idea to play around with reinforcment learning as well as the Travelling Salesman Problem (TSP). Slowly it turned into finding the most efficient route for my fiance and I to take on a road trip. While a majorirty of the code is based on Mr. lccasagrande's implementation, documentation and adjustments were made to answer my overall objective. 
+    This project started as an idea to play around with reinforcement learning as well as the Travelling Salesman Problem (TSP). Slowly it turned into finding the most efficient route for my fiance and I to take on a road trip. While a majorirty of the code is based on Mr. lccasagrande's implementation, documentation and adjustments were made to answer my overall objective. This program did show that the shortest route was roughly 10,000km, where mapquest resulted in about 15,000km. I am tempted to try and find an average of both over many interations, but was unable to find the time to do so before this projects deadline. 
     
     A breif description of the Travelling Salesman Problem from Wikipedia, "Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city and returns to the origin city?" It is an NP-hard problem in combinatorial optimization, important in operations research and theoretical computer science.
     
@@ -480,7 +480,8 @@ Also implemented to improve performance is **Elitism Selection**, which is when 
 
 ---
 #### VI. Final Notes
-
+1. While the most of the code is not my own, I used this project to study something I found interesting. I did change the cities as well as some of the verbage (was in spanish originally)
+2. 
 ---
 #### VII. References
    1. **lccasagrande**
