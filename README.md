@@ -1,5 +1,5 @@
 ## <center> CS3120 - Machine Learning Final Project</center>
-### <center>Traveling Salesman Problem (TSP) - Genetic Algorithm</center>
+### <center>Travelling Salesman Problem (TSP) - Genetic Algorithm</center>
 ##### <center> Nick Gagliardi </center>
 
 ---
@@ -13,7 +13,9 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
 #### I. Description of the Problem
 1. *What is the project about?*
 
-    This project started as an idea to play around with reinforcment learning as well as the Traveling Salesman Problem (TSP). Find the most efficient route for my fiance and I to take while we travel around the United States. 
+    This project started as an idea to play around with reinforcment learning as well as the Travelling Salesman Problem (TSP). Slowly it turned into finding the most efficient route for my fiance and I to take on a road trip. While a majorirty of the code is based on Mr. lccasagrande's implementation, documentation and adjustments were made to answer my overall objective. 
+    
+    A breif description of the Travelling Salesman Problem from Wikipedia, "Given a list of cities and the distances between each pair of cities, what is the shortest possible route that visits each city and returns to the origin city?" It is an NP-hard problem in combinatorial optimization, important in operations research and theoretical computer science.
     
     Utilizing a Genetic Algorithm the program will attempted to find the shortest route between 15 American locations:
     - Denver, CO
@@ -32,7 +34,12 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
     - Chicago, IL
     - New York, NY
     
-    I want to see if mapquest, google maps, and etc. can give me a better result to this TSP or if a GA will give better results.
+    
+    The output is two graphs, one showing a comparison of the cost (distance in KM) and number of generations. The other graph is a rough estimation of the shortest route, with the coastline of the globel in the foreground. 
+    
+    ![](output/main_output.png)
+    ![](output/shortest_route.png)
+    
 ---
 #### II. Implementation
 1. **`./src/main.py`**
@@ -153,13 +160,11 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
             self.genes.append(gene)
             self.__reset_params()
 
-        @property
         def fitness(self):
             if self.__fitness == 0:
                 self.__fitness = 1 / self.travel_cost  # Normalize travel cost
             return self.__fitness
 
-        @property
         def travel_cost(self):  # Get total travelling cost
             if self.__travel_cost == 0:
                 for i in range(len(self.genes)):
@@ -183,7 +188,6 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
         def __init__(self, individuals):
             self.individuals = individuals
 
-        @staticmethod
         def gen_individuals(sz, genes):
             individuals = []
             for _ in range(sz):
@@ -205,6 +209,15 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
             return fittest
     ```
 
+    - **Elitism Selection:**
+        - In the beginning, the best individuals are copied from the current generation and then the   evolution proceeds (crossover, mutation).
+        - This prevents the loss of the best solution that was reached, so elitism helps in the rapid  improvement  of  the performance of the GA(arxiv.org).
+    - **Crossover (Recombination):**
+        - This process takes two parents (chromosomes) to create a new offspring by switching segments of the parent genes.
+        - It is more likely that the new offspring (children) will  contain  good  parts  of  their parents, and consequently perform better as compared to their ancestors. 
+        - A number of different crossover  operators  can  be  used  in  GAs(Kaya  &  Uyar,  2011), beginning  with  one-point  crossover  and  two-point  crossover,  then evolving  into  several  techniques  to  accommodate  some  situations.
+    - **Mutation:**
+        - This is where there is a cahnge or a switch between specific genes within a single chromosome to create chromosomes that provide a new solution for the next generation, with the aim of obtaining the best possible solutions, and thus introduce a certain level of diversity to the population.
     ```python
     def evolve(pop, tourn_size, mut_rate):
         new_generation = Population([])
@@ -309,6 +322,9 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
     
     
 3. **`./src/utils.py`**
+    - This section of code is for displaying the output of the program.
+    - Basemap is required to display the output correctly
+    
     ```python
     import matplotlib.pyplot as plt
     import tsp_ga as ga
@@ -399,7 +415,7 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
 #### III. Libraries/Packages
    ##### REQUIRED TO RUN THE PROGRAM: 
    1. ***basemap***
-       - Installing this package and be a pain in the butt depending on your system.
+       - Installing this package can be a pain in the butt depending on your system.
        - If you run into any issues (like I did), follow this link's tutorial.
            - https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-installing-matplotlib-and-basemap/
        - Side note:
@@ -416,23 +432,23 @@ python main.py -v 1 --pop_size 500 --tourn_size 50 --mut_rate 0.02 --n_gen 20 --
        - `pip3 install random`
    7. ***argparse***
        - `pip3 install argparse`
-   8. ***from sys import maxsize***
-   9. ***from time import time***
  
 ---
 #### IV. Genetic Algorithm (GA)
-A genetic algorithm is a heuristic search method used in artificial intelligent and computing. It is used for finding optimized solutions to search problems based on the theory of natural selection and evolutionary biology. Genetic algorithms are excellent for searching through large and complex data sets. They are considered capable of finding reasonable solutions to complex issues as they are highly capable of solving unconstrained and constrained optimization issues (Techopedia).
+The main reason for selecting this particular algorithm was the fact that it was not really covered in our Machine Learning class. I was already curious about GAs, having already seen videos of race car games being played by AI based on GAs. So while this particular implementation is rather simple, I thought it was a good way to start. Furthermore, I tried to maintain the idea that this project was for expanding my base knowledge and to try something new.
 
-In a genetic algorithm, a population of candidate solutions (also called individuals, creatues, or phenotypes) to an optimization problem evolved toward better solutions (wikipedia). Each of these 'individual' solutions has a set of properties that can be manipulated or adjusted. Evolving from a population of randomly generated individuals, an iterative process, with the population in each iteration called a *generation*. After each generation is generated the fitness of every individual in the population is evaluated through a fitness function. The individuals that are more successful are selected from the current population, and each individual's attributes are then modified, or altered randomly, to form the next generation. Usually, GAs will terminate when either a max number of generations is reached, or a predetermined fitness level is achieved for the population.
+Now a genetic algorithm is a heuristic search method used in artificial intelligent and computing. It is used for finding optimized solutions to search problems based on the theory of natural selection and evolutionary biology. Genetic algorithms are excellent for searching through large and complex data sets. They are considered capable of finding reasonable solutions to complex issues as they are highly capable of solving unconstrained and constrained optimization issues (Techopedia).
 
-The aim of this program is to find a more efficient solution than just brute force searching for an answer. While this particular algorithm is simple, understanding the behavior is difficult to understand. I struggled with the way GAs generate a solutions. 
+In a genetic algorithm, a population of candidate solutions (also called individuals, creatues, or phenotypes) to an optimization problem evolved toward better solutions (wikipedia). Each of these 'individual' solutions has a set of properties that can be manipulated or adjusted. Then by Evolving from a population of randomly generated individuals, in an iterative process, with the population in each iteration called a *generation*. After each generation is generated the fitness of every individual in the population is evaluated through a fitness function. In my case, the project implementes a type of *tournament* style based on the distance in KM. The individuals that are the most successful are selected from the current population, and each individual's attributes are then modified, or altered randomly, to form the next generation. Usually, GAs will terminate when either a max number of generations is reached, or a predetermined fitness level is achieved for the population.
+
+The aim of this program is to find a more efficient solution than just brute force searching for an answer. While this particular algorithm is simple, understanding the behavior is difficult to understand. I know that I struggled with the way GAs generate a solutions. 
 
 However, genetic algorithms really only require a few basic steps:
    1. ***Initialization:***
        - Depending on the problem trying to be solved, the population size can vary. Often, the original population will be generated randomly, thus allowing for a wider range of possible mutations.
    2. ***Selection:***
        - After each generations a portion of the existing population is selected to start the next generation.
-   3. ***Genetic Operators:****
+   3. ***Genetic Operators:***
        - These processes ultimately result in the next generation population of 'chromosomes' that is different from the initial generation.
        - The average fitness will have increase through this process for the overall population, since only the best individuals from the first generation are selected along with a small porportion of less fit solutions.
        - These less fit solutions ensure genetic diversity within the genetic pool of the parents and therefore ensure the genetic diversity of the subsequent generation of children.
@@ -454,6 +470,11 @@ Limitations (Medium)
 
 ---
 #### V. Analysis of Performance
+The model cold be improved by adding specifing start location, rather than being just random. However the overall performance was improved by keeping distances from different cities in a table, thus improving the execution time (see `class Gene` in `./src/tsp_ga.py`). 
+
+Also implemented to improve performance is **Elitism Selection**, which is when the best individuals are selected from the current generation and then slightly altered (evolution, crossover, mutation, etc), then added to the next generation. Overtime this will gradually improve the results i.e. performance. See `def evolve()` in `./src/tsp_ga.py`. 
+
+![](output/performance_output.png)
 
 ---
 #### VI. Final Notes
@@ -481,3 +502,6 @@ Limitations (Medium)
         - https://www.krishisanskriti.org/vol_image/04Jul201511073305%20%20%20%20%20%20%20Dayanand%205%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20329-333.pdf
    8. **Matplotlib Basemap Tutorial: Installing matplotlib and Basemap**
         - https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-installing-matplotlib-and-basemap/
+   9. **Arxiv.org**
+        - https://arxiv.org/pdf/1801.02827.pdf
+        - Used to explain different performance selections.
